@@ -22,6 +22,24 @@ import InboxIcon from "@mui/icons-material/MoveToInbox";
 import MailIcon from "@mui/icons-material/Mail";
 import Modal from "@mui/material/Modal";
 import axios from "axios";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import FormControl from "@mui/material/FormControl";
+import Select from "@mui/material/Select";
+import React, { PureComponent } from "react";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 import { styled, useTheme } from "@mui/material/styles";
 import "./styles.css";
 
@@ -42,7 +60,53 @@ const style = {
   border: "2px solid #000",
   boxShadow: 24,
   p: 4,
+  display: "flex",
 };
+
+const data = [
+  {
+    name: "10:00",
+    rainLevel: 0,
+    pv: 2400,
+    amt: 2400,
+  },
+  {
+    name: "11:00",
+    rainLevel: 2,
+    pv: 1398,
+    amt: 2210,
+  },
+  {
+    name: "12:00",
+    rainLevel: 0,
+    pv: 9800,
+    amt: 2290,
+  },
+  {
+    name: "13:00",
+    rainLevel: 0.5,
+    pv: 3908,
+    amt: 2000,
+  },
+  {
+    name: "14:00",
+    rainLevel: 0.7,
+    pv: 4800,
+    amt: 2181,
+  },
+  {
+    name: "15:00",
+    rainLevel: 0,
+    pv: 3800,
+    amt: 2500,
+  },
+  {
+    name: "16:00",
+    rainLevel: 0,
+    pv: 4300,
+    amt: 2100,
+  },
+];
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
@@ -155,7 +219,13 @@ const App = () => {
   const theme = useTheme();
   const [open, setOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [handleOpen, setHandleOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState(-1);
+  const [timestamp, setTimestamp] = useState("");
+  const [temperature, setTemperature] = useState("");
+  const [humidity, setHumidity] = useState("");
+  const [rainLevel, setRainLevel] = useState("");
+  const [rainLevelHistory, setRainLevelHistory] = useState([]);
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -192,6 +262,41 @@ const App = () => {
     ))
   );
 
+  const getAndSetMessage = async () => {
+    const response = await axios.get("http://113.53.253.41:4000/nodesensor01");
+    const lastItem = response.data[response.data.length - 1];
+    const date = new Date();
+
+    setRainLevel(lastItem.rInt + "");
+    setTemperature(lastItem.temperature + "");
+    setHumidity(lastItem.humidity + "");
+    setTimestamp(date.toLocaleString("th-TH"));
+
+    setRainLevelHistory([
+      ...rainLevelHistory,
+      {
+        rainLevel: lastItem.rInt + "",
+        name: rainLevelHistory.length + "eieiza",
+      },
+    ]);
+  };
+
+  // [1,2,3] ==>> [...[1,2,3],4] = [1,2,3,4]
+
+  useEffect(() => {
+    getAndSetMessage();
+
+    setInterval(() => {
+      getAndSetMessage();
+    }, 5000);
+  }, []);
+
+  const [age, setAge] = React.useState("");
+
+  const handleChange = (event) => {
+    setAge(event.target.value);
+  };
+
   return (
     <Box sx={{ display: "flex" }}>
       <CssBaseline />
@@ -207,7 +312,7 @@ const App = () => {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div">
-            Luka
+            {timestamp}
           </Typography>
         </Toolbar>
       </AppBar>
@@ -263,25 +368,46 @@ const App = () => {
 
         <Container>
           <Grid container spacing={2}>
-            <Grid item xs={6} md={3}>
+            <Grid
+              item
+              xs={6}
+              md={3}
+              onClick={() => {
+                setHandleOpen(true);
+              }}
+            >
               <Item>
                 <Typography>Rain level</Typography>
-                <Typography variant="h3"> 20 </Typography>
+                <Typography variant="h3"> {rainLevel} </Typography>
                 <Typography variant="h5"> mm. </Typography>
               </Item>
             </Grid>
-            <Grid item xs={6} md={3}>
+            <Grid
+              item
+              xs={6}
+              md={3}
+              onClick={() => {
+                setHandleOpen(true);
+              }}
+            >
               <Item>
                 <Typography>Temperature</Typography>
-                <Typography variant="h3"> 32 </Typography>
+                <Typography variant="h3"> {temperature} </Typography>
                 <Typography variant="h5"> °C </Typography>
               </Item>
             </Grid>
-            <Grid item xs={6} md={3}>
+            <Grid
+              item
+              xs={6}
+              md={3}
+              onClick={() => {
+                setHandleOpen(true);
+              }}
+            >
               <Item>
-                <Typography>Wind speed</Typography>
-                <Typography variant="h3"> 10 </Typography>
-                <Typography variant="h5"> Km/h </Typography>
+                <Typography>Humidity</Typography>
+                <Typography variant="h3"> {humidity} </Typography>
+                <Typography variant="h5"> % </Typography>
               </Item>
             </Grid>
             <Grid item xs={6} md={3}>
@@ -295,7 +421,7 @@ const App = () => {
             </Grid>
             <Grid item xs={12}>
               <MapWithAMarker
-                googleMapURL="https://maps.googleapis.com/maps/api/js?key=AIzaSyAWMrDqIlxcZ_Er3kQmgptSuHIXoSn5mKo&v=3.exp&libraries=geometry,drawing,places"
+                googleMapURL="https://maps.googleapis.com/maps/api/js?key=AIzaSyBGiGRGMEp5i_C0Wr6_m0L4Xm_ZagIkyg0&v=3.exp&libraries=geometry,drawing,places"
                 loadingElement={<div style={{ height: `100%` }} />}
                 containerElement={<div style={{ height: `650px` }} />}
                 mapElement={<div style={{ height: `100%` }} />}
@@ -311,15 +437,110 @@ const App = () => {
         aria-describedby="modal-modal-description"
       >
         <Box className="custom-modal-style" sx={style}>
-          <div class="modal-body">
-            <img src="S1-S 01.jpg" />
-          </div>
+          <ResponsiveContainer width="50%" height="50%">
+            <BarChart
+              width={500}
+              height={300}
+              data={data}
+              margin={{
+                top: 5,
+                right: 30,
+                left: 20,
+                bottom: 5,
+              }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="pv" fill="#8884d8" />
+              <Bar dataKey="rainLevel" fill="#82ca9d" />
+            </BarChart>
+          </ResponsiveContainer>
+          <ResponsiveContainer width="50%" height="50%">
+            <LineChart
+              width={500}
+              height={300}
+              data={data}
+              margin={{
+                top: 5,
+                right: 30,
+                left: 20,
+                bottom: 5,
+              }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="pv"
+                stroke="#8884d8"
+                activeDot={{ r: 8 }}
+              />
+              <Line type="monotone" dataKey="rainLevel" stroke="#82ca9d" />
+            </LineChart>
+          </ResponsiveContainer>
+        </Box>
+      </Modal>
 
-          <div class="modal-footer">
-            <button type="button" class="btn btn-danger" data-dismiss="modal">
-              Close
-            </button>
-          </div>
+      <Modal
+        open={handleOpen}
+        onClose={() => setHandleOpen(false)}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box className="custom-modal-style" sx={style}>
+          <ResponsiveContainer width="90%" height="100%">
+            <LineChart
+              width={500}
+              height={300}
+              data={data}
+              margin={{
+                top: 5,
+                right: 30,
+                left: 20,
+                bottom: 5,
+              }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="rainLevel"
+                stroke="#203a62"
+                activeDot={{ r: 8 }}
+              />
+              {/* <Line type="monotone" dataKey="uv" stroke="#82ca9d" /> */}
+            </LineChart>
+          </ResponsiveContainer>
+
+          <FormControl sx={{ m: 1, minWidth: 80 }}>
+            <InputLabel id="demo-simple-select-autowidth-label">
+              Time
+            </InputLabel>
+            <Select
+              labelId="demo-simple-select-autowidth-label"
+              id="demo-simple-select-autowidth"
+              value={age}
+              onChange={handleChange}
+              autoWidth
+              label="Age"
+            >
+              {/* <MenuItem value="">
+                <em>None</em>
+              </MenuItem> */}
+              <MenuItem value={10}>1 hour</MenuItem>
+              <MenuItem value={21}>24 hour</MenuItem>
+              <MenuItem value={22}>1 week</MenuItem>
+            </Select>
+          </FormControl>
         </Box>
       </Modal>
     </Box>
